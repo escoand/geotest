@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.2.0/maptiler-sdk.umd.min.js"></script>
+    <link
+      href="https://cdn.maptiler.com/maptiler-sdk-js/v3.2.0/maptiler-sdk.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script type="module">
+      var xStart = -180;
+      var yStart = -90;
+      var xEnd = 180;
+      var yEnd = 90;
+      var xText = 12.5;
+      var yText = 50.6;
+
+      function createGrid(step) {
+        const geojson = {
+          type: "FeatureCollection",
+          features: [],
+        };
+        for (let i = xStart; i <= xEnd; i += step) {
+          geojson.features.push({
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: [i, yText],
+            },
+            properties: { name: Number(i).toPrecision(4) + "°" },
+          });
+          geojson.features.push({
+            type: "Feature",
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [i, yStart],
+                [i, yEnd],
+              ],
+            },
+          });
+        }
+        for (let i = yStart; i <= yEnd; i += step) {
+          geojson.features.push({
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: [xText, i],
+            },
+            properties: { name: Number(i).toPrecision(4) + "°" },
+          });
+          geojson.features.push({
+            type: "Feature",
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [xStart, i],
+                [xEnd, i],
+              ],
+            },
+          });
+        }
+        console.log(geojson);
+        return geojson;
+      }
+
+      // Initialize the map
+      maptilersdk.config.apiKey = "WhAMg18w38LHuVYEtZE9";
+      const map = new maptilersdk.Map({
+        container: "map",
+        center: [xText, yText],
+        projection: "globe",
+        projectionControl: true,
+        style: maptilersdk.MapStyle.STREETS,
+        zoom: 6,
+      });
+      map.on("load", () => {
+        map.addSource("step10", {
+          type: "geojson",
+          data: createGrid(10),
+        });
+        map.addSource("step1", {
+          type: "geojson",
+          data: createGrid(1),
+        });
+        map.addSource("step01", {
+          type: "geojson",
+          data: createGrid(0.05),
+        });
+        // full
+        map.addLayer({
+          id: "step10",
+          type: "line",
+          source: "step10",
+          paint: {
+            "line-color": "#888",
+            "line-width": 3,
+          },
+        });
+        // half
+        map.addLayer({
+          id: "step1",
+          type: "line",
+          source: "step1",
+          minzoom: 5,
+          maxzoom: 24,
+          paint: {
+            "line-color": "#888",
+            "line-width": 2,
+          },
+        });
+        // lower
+        map.addLayer({
+          id: "step01",
+          type: "line",
+          source: "step01",
+          minzoom: 10,
+          maxzoom: 24,
+          paint: {
+            "line-color": "#888",
+            "line-width": 1,
+          },
+        });
+        // text
+        map.addLayer({
+          id: "step10-text",
+          type: "symbol",
+          source: "step10",
+          layout: {
+            "text-field": ["get", "name"],
+          },
+          paint: {
+            "text-color": "black",
+          },
+        });
+        map.addLayer({
+          id: "step1-text",
+          type: "symbol",
+          source: "step1",
+          minzoom: 5,
+          maxzoom: 24,
+          layout: {
+            "text-field": ["get", "name"],
+          },
+          paint: {
+            "text-color": "black",
+          },
+        });
+        map.addLayer({
+          id: "step01-text",
+          type: "symbol",
+          source: "step01",
+          minzoom: 10,
+          maxzoom: 24,
+          layout: {
+            "text-field": ["get", "name"],
+          },
+          paint: {
+            "text-color": "black",
+          },
+        });
+      });
+    </script>
+  </body>
+</html>
